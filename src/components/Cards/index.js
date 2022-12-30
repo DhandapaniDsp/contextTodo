@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useContext, useEffect } from "react";
 import Card from "@mui/material/Card";
 import CardContent from "@mui/material/CardContent";
 import CardMedia from "@mui/material/CardMedia";
@@ -10,93 +10,116 @@ import flower from "../../assets/images/yellow.png";
 import { AiOutlinePlus } from "react-icons/ai";
 import InputBase from "@mui/material/InputBase";
 import { LabelCards } from "../LabelCards";
+import { v4 as uuid } from "uuid";
+import { GlobalContext } from "../../context/GlobalState";
+import moment from "moment/moment";
 export const Cards = (props) => {
-  const [title, setTitle] = useState("");
+  const [name, setName] = useState("");
   const [date, setDate] = useState("");
-  const [note, setNote] = useState("");
+  const { users, addUser, removeUser, deleteAll } = useContext(GlobalContext);
+  //const { users, removeUser } = useContext(GlobalContext);
 
-  const handleAddBookSubmit = (e) => {
-    e.preventDefault();
-    let book = {
-      title,
-      date,
-    };
-    setNote([...note, book]);
-    setTitle("");
-    setDate("");
+  // const history = useHistory();
+
+  const onSubmit = (e) => {
+    if (date && !name) {
+      document.getElementById("err").innerText = "Enter purpose of schedule..";
+    } else if (!date && name) {
+      document.getElementById("err").innerText =
+        "Enter scheduled time and date..";
+    } else if (!date && !name) {
+      document.getElementById("err").innerText = "Please enter above fields!";
+    } else if (date && name) {
+      document.getElementById("err").innerText = " ";
+      e.preventDefault();
+      const newUser = {
+        id: uuid(),
+        name,
+        date,
+        isSelected:false,
+      };
+      addUser(newUser);
+    }
   };
 
-  const deleteBook = (date) => {
-    const filteredBooks = note.filter((element, index) => {
-      return element.date !== date;
-    });
-    setNote(filteredBooks);
-  };
+  const [time, setTime] = useState();
+  const [day, setDay] = useState();
+
   useEffect(() => {
-    localStorage.setItem("Note", JSON.stringify(note));
-  }, [note]);
+    setInterval(() => {
+      setTime(moment().format("h:m A"));
+    }, 1000);
+    setDay(moment().format("ddd DD"));
+  }, []);
+
   return (
-    <Card sx={cardStyle.mainCard}>
-      <CardActionArea>
+    <>
+      <Box sx={cardStyle.titlecontent}>
+        <h5>TODO List(useContext method)</h5>
+      </Box>
+      <Card sx={cardStyle.mainCard}>
         <Box>
-          <CardMedia
-            component="img"
-            height="140"
-            image={flower}
-            alt="green iguana"
-            sx={cardStyle.cardAction}
-          />
-        </Box>
-
-        <Box sx={cardStyle.timeText}>
-          <Typography variant="h6">Thur 9</Typography>
-          <Typography variant="h5">6.23 AM</Typography>
-        </Box>
-      </CardActionArea>
-      <CardContent sx={cardStyle.cardContent}>
-        <Box sx={cardStyle.boxMediate}>
-          <Box sx={cardStyle.noteBg}>
-            <InputBase
-              fullWidth
-              placeholder="Note"
-              id="fullWidth"
-              sx={{
-                padding: "13px",
-              }}
-              onChange={(e) => setTitle(e.target.value)}
-              value={title}
-            />
-            <InputBase
-              type="datetime-local"
-              sx={cardStyle.dateBase}
-              onChange={(e) => setDate(e.target.value)}
-              value={date}
-            />
-          </Box>
-          <Button
-            variant="contained"
-            sx={cardStyle.plusBtn}
-            onClick={handleAddBookSubmit}
-          >
-            <Box sx={{ color: "#ffffff" }}>
-              <AiOutlinePlus />
+          <CardActionArea>
+            <Box>
+              <CardMedia
+                component="img"
+                height="140"
+                image={flower}
+                alt="green iguana"
+                sx={cardStyle.cardAction}
+              />
             </Box>
-          </Button>
+
+            <Box sx={cardStyle.timeText}>
+              <Typography variant="h6">{day}</Typography>
+              <Typography variant="h5">{time}</Typography>
+            </Box>
+          </CardActionArea>
+          <Box sx={cardStyle.boxMediate}>
+            <Box sx={cardStyle.noteBg}>
+              <InputBase
+                fullWidth
+                placeholder="Note"
+                id="fullWidth"
+                sx={{
+                  padding: "13px",
+                }}
+                onChange={(e) => setName(e.target.value)}
+                value={name}
+              />
+              <InputBase
+                type="datetime-local"
+                sx={cardStyle.dateBase}
+                value={date}
+                onChange={(e) => setDate(e.target.value)}
+              />
+            </Box>
+            <Button
+              variant="contained"
+              sx={cardStyle.plusBtn}
+              onClick={onSubmit}
+            >
+              <Box sx={{ color: "#ffffff" }}>
+                <AiOutlinePlus />
+              </Box>
+            </Button>
+          </Box>
         </Box>
+        <Typography
+          component="h6"
+          sx={cardStyle.helperText}
+          id="err"
+        ></Typography>
+        <CardContent>
+          <Box sx={cardStyle.cardContent}>
+            <Box sx={{ height: "530px", width: "500px" }}>
+              <LabelCards    />
 
-        {note.length > 0 && (
-          <Box>
-            <LabelCards note={note} deleteBook={deleteBook} />
-
-            <Button onClick={() => setNote([])}>Remove All</Button>
+              <Button onClick={deleteAll}>Remove All</Button>
+            </Box>
           </Box>
-        )}
-        {note.length < 1 && (
-          <Box sx={cardStyle.emptyContent}>
-            <Typography>No notes are added yet</Typography>
-          </Box>
-        )}
-      </CardContent>
-    </Card>
+        </CardContent>
+      </Card>
+    </>
   );
 };
